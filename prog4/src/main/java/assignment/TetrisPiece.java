@@ -1,6 +1,7 @@
 package assignment;
 
 import java.awt.*;
+import java.util.Arrays;
 
 /**
  * An immutable representation of a tetris piece in a particular rotation.
@@ -12,6 +13,22 @@ import java.awt.*;
  */
 public final class TetrisPiece implements Piece {
 
+    private final PieceType type;
+    private final int rotationIndex;
+
+    // SRS Bounding Box width and height (Stick is 4x4, Square is 2x2, else is 3x3)
+    private final int width, height;
+
+    // Coords of each block relative to lower left hand
+    private final Point[] body;
+
+    // Lowest y of each column in a piece's bounding box or Integer.MAX_VALUE
+    private final int[] skirt;
+
+    // neighbors either one clockwise or counterclockwise
+    private TetrisPiece clockwisePiece, counterclockwisePiece;
+
+
     /**
      * Construct a tetris piece of the given type. The piece should be in its spawn orientation,
      * i.e., a rotation index of 0.
@@ -20,55 +37,103 @@ public final class TetrisPiece implements Piece {
      * the runner code and testing code.
      */
     public TetrisPiece(PieceType type) {
-        // TODO: Implement me.
+        this(type, 0, copyPoints(type.getSpawnBody()));
+
+        // Build all rotations and loop them
+        TetrisPiece prevPiece = this;
+        for(int i = 1; i < 4; i++) {
+            TetrisPiece nextPiece = new TetrisPiece(type, i, rotateClockwise(prevPiece.body, width));
+
+            // Adds next and prev rotation
+            prevPiece.clockwisePiece = nextPiece;
+            nextPiece.counterclockwisePiece = prevPiece;
+            prevPiece = nextPiece;
+        }
+
+        prevPiece.clockwisePiece = this;
+        this.counterclockwisePiece = prevPiece;
+    }
+
+    // Single rotation constructor without linking others for ring
+    private TetrisPiece(PieceType type, int rotationIndex, Point[] body) {
+        Dimension box = type.getBoundingBox();
+        this.type = type;
+        this.rotationIndex = rotationIndex;
+        this.width = box.width;
+        this.height = box.height;
+        this.body = body;
+        this.skirt = computeSkirt(body, width);
+    }
+
+    // Computes the skirt (lowest y that is filled by the bounding box)
+    private static int[] computeSkirt(Point[] body, int width) {
+        int[] skirt = new int[width];
+        Arrays.fill(skirt, Integer.MAX_VALUE);
+        for(Point p:body) {
+            skirt[p.x] = Math.min(skirt[p.x], p.y);
+        }
+
+        return skirt;
+    }
+
+    // Copy array of points
+    private static Point[] copyPoints(Point[] points) {
+        Point[] copy = new Point[points.length];
+        for(int i = 0; i < points.length; i++) {
+            copy[i] = new Point(points[i]);
+        }
+
+        return copy;
+    }
+
+    // Rotates a body 1 time clockwise within nxn bounding box
+    private static Point[] rotateClockwise(Point[] body, int n) {
+        Point[] after = new Point[body.length];
+        for(int i = 0; i < body.length; i++) {
+            after[i] = new Point(body[i].y, n-1-body[i].x);
+        }
+
+        return after;
     }
 
     @Override
     public PieceType getType() {
-        // TODO: Implement me.
-        return null;
+        return type;
     }
 
     @Override
     public int getRotationIndex() {
-        // TODO: Implement me.
-        return -1;
+        return rotationIndex;
     }
 
     @Override
     public Piece clockwisePiece() {
-        // TODO: Implement me.
-        return null;
+        return clockwisePiece;
     }
 
     @Override
     public Piece counterclockwisePiece() {
-        // TODO: Implement me.
-        return null;
+        return counterclockwisePiece;
     }
 
     @Override
     public int getWidth() {
-        // TODO: Implement me.
-        return -1;
+        return width;
     }
 
     @Override
     public int getHeight() {
-        // TODO: Implement me.
-        return -1;
+        return height;
     }
 
     @Override
     public Point[] getBody() {
-        // TODO: Implement me.
-        return null;
+        return copyPoints(body);
     }
 
     @Override
     public int[] getSkirt() {
-        // TODO: Implement me.
-        return null;
+        return skirt.clone();
     }
 
     @Override
@@ -77,7 +142,8 @@ public final class TetrisPiece implements Piece {
         if(!(other instanceof TetrisPiece)) return false;
         TetrisPiece otherPiece = (TetrisPiece) other;
 
-        // TODO: Implement me.
-        return false;
+        return type == otherPiece.type && rotationIndex == otherPiece.rotationIndex;
     }
+
+    // hashCode equals possible issue
 }
