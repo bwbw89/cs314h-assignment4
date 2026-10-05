@@ -4,7 +4,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 
-import assignment.Board.Result;
 
 /**
  * Represents a Tetris board -- essentially a 2D grid of piece types (or nulls). Supports
