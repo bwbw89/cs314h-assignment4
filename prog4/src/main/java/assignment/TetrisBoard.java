@@ -124,6 +124,7 @@ public final class TetrisBoard implements Board {
     private Result rotate(boolean clockwise) {
         Piece rotated = clockwise ? currentPiece.clockwisePiece() : currentPiece.counterclockwisePiece();
         for(Point kick : wallKicks(currentPiece, clockwise)) {
+            // if the rotated piece fits in grid
             if(fits(rotated, pieceX+kick.x, pieceY+kick.y)) {
                 currentPiece = rotated;
                 pieceX += kick.x;
@@ -278,6 +279,9 @@ public final class TetrisBoard implements Board {
         for (int c = 0; c < skirt.length; c++) {
             // nothing below
             if(skirt[c] == Integer.MAX_VALUE) continue;
+
+            // block column off board
+            if(x+c < 0 || x+c >= width) throw new IllegalArgumentException();
 
             y = Math.max(y, columnHeights[x+c]-skirt[c]);
         }
