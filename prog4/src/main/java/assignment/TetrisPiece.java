@@ -2,6 +2,7 @@ package assignment;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * An immutable representation of a tetris piece in a particular rotation.
@@ -145,5 +146,8 @@ public final class TetrisPiece implements Piece {
         return type == otherPiece.type && rotationIndex == otherPiece.rotationIndex;
     }
 
-    // hashCode equals possible issue
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, rotationIndex);
+    }
 }
