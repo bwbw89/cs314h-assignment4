@@ -25,39 +25,37 @@ public class IntelligentBrain implements Brain {
                 if (rotatedBoard.getLastResult() != Board.Result.SUCCESS) {
                     continue; 
                 }
+            }
+            // first move check
+            Board.Action baseFirst = (rotations > 0) ? Board.Action.CLOCKWISE
+                                                            : Board.Action.DROP;
 
-                // first move check
-                Board.Action baseFirst = (rotations > 0) ? Board.Action.CLOCKWISE
-                                                             : Board.Action.DROP;
+            // check dropping off as given
+            evaluateBoard(rotatedBoard.testMove(Board.Action.DROP), 
+                                                baseFirst);
 
-                // check dropping off as given
-                evaluateBoard(rotatedBoard.testMove(Board.Action.DROP), 
-                                                    baseFirst);
+            // first left
+            Board BoardL = rotatedBoard.testMove(Board.Action.LEFT);
+            Board.Action leftFirst = (rotations > 0) ? Board.Action.CLOCKWISE
+                                            : Board.Action.LEFT;
 
-                // first left
-                Board BoardL = rotatedBoard.testMove(Board.Action.LEFT);
-                Board.Action leftFirst = (rotations > 0) ? Board.Action.CLOCKWISE
-                                                : Board.Action.LEFT;
+            // check all left
+            while (BoardL.getLastResult() == Board.Result.SUCCESS) {
+                evaluateBoard(BoardL.testMove(Board.Action.DROP), 
+                                                    leftFirst);
+                BoardL.move(Board.Action.LEFT);
+            }
 
-                // check all left
-                while (BoardL.getLastResult() == Board.Result.SUCCESS) {
-                    evaluateBoard(BoardL.testMove(Board.Action.DROP), 
-                                                        leftFirst);
-                    BoardL.move(Board.Action.LEFT);
-                }
+            // first right
+            Board BoardR = rotatedBoard.testMove(Board.Action.RIGHT);
+            Board.Action rightFirst = (rotations > 0) ? Board.Action.CLOCKWISE
+                                            : Board.Action.RIGHT;
 
-                // first right
-                Board BoardR = rotatedBoard.testMove(Board.Action.RIGHT);
-                Board.Action rightFirst = (rotations > 0) ? Board.Action.CLOCKWISE
-                                                : Board.Action.RIGHT;
-
-                // check all left
-                while (BoardR.getLastResult() == Board.Result.SUCCESS) {
-                    evaluateBoard(BoardR.testMove(Board.Action.DROP), 
-                                                        rightFirst);
-                    BoardR.move(Board.Action.RIGHT);
-                }
-                
+            // check all left
+            while (BoardR.getLastResult() == Board.Result.SUCCESS) {
+                evaluateBoard(BoardR.testMove(Board.Action.DROP), 
+                                                    rightFirst);
+                BoardR.move(Board.Action.RIGHT);
             }
         }
 
