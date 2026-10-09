@@ -66,7 +66,7 @@ public final class TetrisPiece implements Piece {
         this.skirt = computeSkirt(body, width);
     }
 
-    // Computes the skirt (lowest y that is filled by the bounding box)
+    // Computes the skirt (lowest y that is filled by the bounding box) per column
     private static int[] computeSkirt(Point[] body, int width) {
         int[] skirt = new int[width];
         Arrays.fill(skirt, Integer.MAX_VALUE);
@@ -87,7 +87,7 @@ public final class TetrisPiece implements Piece {
         return copy;
     }
 
-    // Rotates a body 1 time clockwise within nxn bounding box
+    // Rotates a body 1 time clockwise within nxn bounding box using SRS chart
     private static Point[] rotateClockwise(Point[] body, int n) {
         Point[] after = new Point[body.length];
         for(int i = 0; i < body.length; i++) {
@@ -127,6 +127,7 @@ public final class TetrisPiece implements Piece {
         return height;
     }
 
+    // copy so immutable pieces aren't changed
     @Override
     public Point[] getBody() {
         return copyPoints(body);

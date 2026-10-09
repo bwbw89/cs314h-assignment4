@@ -12,7 +12,7 @@ import java.util.Objects;
  */
 public final class TetrisBoard implements Board {
 
-    // No wall kick pieces
+    // No wall kick pieces (squares)
     private static final Point[] NO_KICKS = {new Point(0,0)};
 
     private final int width, height;
@@ -41,13 +41,27 @@ public final class TetrisBoard implements Board {
         columnHeights = new int[width];
     }
 
+    // Test only: board with the given placed blocks, cells[y][x] with y = 0 at the bottom
+    TetrisBoard(Piece.PieceType[][] cells) {
+        this(cells[0].length, cells.length);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (cells[y][x] == null) continue;
+                grid[y][x] = cells[y][x];
+                rowWidths[y]++;
+                columnHeights[x] = Math.max(columnHeights[x], y + 1);
+                maxHeight = Math.max(maxHeight, y + 1);
+            }
+        }
+    }
+
     // Copy for testMove
     private TetrisBoard(TetrisBoard other) {
         width = other.width;
         height = other.height;
         grid = new Piece.PieceType[height][];
 
-        // clone pieces for sharing
+        // copies grid rows so grid data not shared
         for (int y = 0; y < height; y++) {
             grid[y] = other.grid[y].clone();
         }
@@ -120,7 +134,7 @@ public final class TetrisBoard implements Board {
         return Result.SUCCESS;
     }
 
-    // Rotates using the first SRS wall kick
+    // Rotates trying each SRS wall kick in order
     private Result rotate(boolean clockwise) {
         Piece rotated = clockwise ? currentPiece.clockwisePiece() : currentPiece.counterclockwisePiece();
         for(Point kick : wallKicks(currentPiece, clockwise)) {
@@ -272,7 +286,7 @@ public final class TetrisBoard implements Board {
 
     @Override
     public int dropHeight(Piece piece, int x) { 
-        // Resting point is the lowest block at the highest column
+        // Highest of (column height-skirt) over piece filled columns
         int[] skirt = piece.getSkirt();
         int y = Integer.MIN_VALUE;
 
@@ -288,11 +302,12 @@ public final class TetrisBoard implements Board {
         return y;
     }
 
+    // 0 when out of the grid
     @Override
-    public int getColumnHeight(int x) { return columnHeights[x]; }
+    public int getColumnHeight(int x) { return (x < 0 || x >= width) ? 0 : columnHeights[x]; }
 
     @Override
-    public int getRowWidth(int y) { return rowWidths[y]; }
+    public int getRowWidth(int y) { return (y < 0 || y >= height) ? 0 : rowWidths[y]; }
 
     @Override
     public Piece.PieceType getGrid(int x, int y) { 
