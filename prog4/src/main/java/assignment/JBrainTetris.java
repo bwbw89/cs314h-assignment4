@@ -27,7 +27,7 @@ public class JBrainTetris extends JTetris {
         super.tick(verb);
     }
     public static void main(String[] args) {
-        JBrainTetris brainTetris = new JBrainTetris(true, 3);
+        JBrainTetris brainTetris = new JBrainTetris(true, 1);
         
         createGUI(brainTetris);
     }
