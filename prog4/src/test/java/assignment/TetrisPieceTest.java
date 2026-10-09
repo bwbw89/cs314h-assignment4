@@ -12,8 +12,8 @@ import assignment.Piece.PieceType;
 class TetrisPieceTest {
     static final int MAX = Integer.MAX_VALUE;
 
-    // Every rotation of every piece, copied from the SRS chart (tetris.wiki/SRS).
-    // Each picture is the bounding box, top row first.
+    // Every rotation of every piece, copied from the SRS chart.
+    // Each picture is the bounding box
     static final Object[][] SRS_CHART = {
         {PieceType.STICK, new String[][] {
             {"....", "####", "....", "...."}, {"..#.", "..#.", "..#.", "..#."},
@@ -32,11 +32,12 @@ class TetrisPieceTest {
             {"##.", ".##", "..."}, {"..#", ".##", ".#."}, {"...", "##.", ".##"}, {".#.", "##.", "#.."}}},
     };
 
+    // converts piece body from array to set (order doesn't matter of blocks)
     static Set<Point> body(Piece p) {
         return new HashSet<>(Arrays.asList(p.getBody()));
     }
 
-    /** Block positions from a picture of the bounding box, top row first. */
+    /* Block positions from a picture of the bounding box, top row first. */
     static Set<Point> picture(String... rows) {
         Set<Point> blocks = new HashSet<>();
         for (int i = 0; i < rows.length; i++) {
@@ -47,7 +48,7 @@ class TetrisPieceTest {
         return blocks;
     }
 
-    /** Lowest block in each column, or MAX for an empty column. */
+    /* Lowest block in each column, or MAX for an empty column. */
     static int[] skirtOf(Set<Point> blocks, int width) {
         int[] skirt = new int[width];
         Arrays.fill(skirt, MAX);
@@ -55,12 +56,14 @@ class TetrisPieceTest {
         return skirt;
     }
 
+    // check if rotations match the srs chart
     @Test
     void bodyAndSkirtMatchSrsChart() {
         for (Object[] row : SRS_CHART) {
             PieceType type = (PieceType) row[0];
             String[][] rotations = (String[][]) row[1];
             Piece p = new TetrisPiece(type);
+            // go through all rotations
             for (int r = 0; r < 4; r++) {
                 String name = type + " rotation " + r;
                 Set<Point> expected = picture(rotations[r]);
@@ -78,20 +81,20 @@ class TetrisPieceTest {
     @Test
     void specExamples() {
         assertArrayEquals(new int[] {0, 0}, new TetrisPiece(PieceType.SQUARE).getSkirt());
-        // The spec's Right Dog example is rotation 3 of the provided spawn body.
+        // The spec's Right Dog example is rotation 3 of the spawn body.
         Piece dog = new TetrisPiece(PieceType.RIGHT_DOG).counterclockwisePiece();
-        assertEquals(picture("#..", "##.", ".#."), body(dog));   // [(0,1), (0,2), (1,0), (1,1)]
+        assertEquals(picture("#..", "##.", ".#."), body(dog));
         assertArrayEquals(new int[] {1, 0, MAX}, dog.getSkirt());
     }
 
     @Test
     void equalsAndHashCode() {
         Piece t = new TetrisPiece(PieceType.T);
-        // Separately built pieces of the same type and rotation are equal.
+        // Separately built pieces of the same type and rotation are equal
         assertEquals(t, new TetrisPiece(PieceType.T));
         assertEquals(t.hashCode(), new TetrisPiece(PieceType.T).hashCode());
         assertEquals(t.clockwisePiece(), new TetrisPiece(PieceType.T).clockwisePiece());
-        // A different rotation or type is not equal, even when the body looks the same (the square).
+        // A different rotation or type is not equal, even when the body looks the same
         assertNotEquals(t, t.clockwisePiece());
         assertNotEquals(t, new TetrisPiece(PieceType.STICK));
         Piece square = new TetrisPiece(PieceType.SQUARE);
@@ -99,20 +102,17 @@ class TetrisPieceTest {
         assertNotEquals(t, null);
     }
 
+    // null throws
     @Test
     void nullTypeThrows() {
         assertThrows(NullPointerException.class, () -> new TetrisPiece(null));
     }
 
     // white box
-    // These tests depend on how TetrisPiece is built
-    // rotations are precomputed once and linked in a ring, and each skirt is computed
-    // from its body in the constructor.
 
     @Test
     void rotationCycleReturnsTheSameObject() {
-        // Same object (==), not just an equal one: rotating follows a link instead of
-        // building a new piece, which is what makes rotation constant time.
+        // Same object is the one being rotated not copied
         for (PieceType type : PieceType.values()) {
             Piece p = new TetrisPiece(type);
             assertSame(p, p.clockwisePiece().clockwisePiece().clockwisePiece().clockwisePiece(), type.toString());

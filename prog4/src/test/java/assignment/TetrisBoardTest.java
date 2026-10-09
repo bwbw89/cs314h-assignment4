@@ -15,7 +15,7 @@ class TetrisBoardTest {
 
     // helpers
 
-    /** Builds a board from a picture, top row first: '#' is a placed block, '.' is empty. */
+    /* Builds a board top to bottom '#' is a placed block, '.' is empty. */
     static TetrisBoard board(String... rows) {
         int h = rows.length, w = rows[0].length();
         PieceType[][] cells = new PieceType[h][w];
@@ -27,19 +27,20 @@ class TetrisBoardTest {
         return new TetrisBoard(cells);
     }
 
-    /** An empty 8 x 10 board with a T in spawn rotation at (x, y). */
+    /* An empty 8 x 10 board with a T in spawn rotation. */
     static TetrisBoard withT(int x, int y) {
         TetrisBoard b = new TetrisBoard(8, 10);
         b.nextPiece(new TetrisPiece(PieceType.T), new Point(x, y));
         return b;
     }
 
-    /** A vertical stick: blocks in column 2 of its bounding box. */
+    /* Vertical stick rotation */
     static Piece verticalStick() {
         return new TetrisPiece(PieceType.STICK).clockwisePiece();
     }
 
-    /** Recomputes row widths, column heights and max height from the grid and compares. */
+    /* Recomputes row widths, column heights and max height from the grid and compares. */
+    // comparison to cached is important
     static void checkStoredValues(Board b) {
         int max = 0;
         for (int x = 0; x < b.getWidth(); x++) {
@@ -47,24 +48,31 @@ class TetrisBoardTest {
             for (int y = 0; y < b.getHeight(); y++) {
                 if (b.getGrid(x, y) != null) h = y + 1;
             }
+            // height still the same per column
             assertEquals(h, b.getColumnHeight(x), "column height " + x);
             max = Math.max(max, h);
         }
+
+        // max height still same for skirt
         assertEquals(max, b.getMaxHeight(), "max height");
         for (int y = 0; y < b.getHeight(); y++) {
             int w = 0;
             for (int x = 0; x < b.getWidth(); x++) {
                 if (b.getGrid(x, y) != null) w++;
             }
+
+            // occupied blocks in row still same
             assertEquals(w, b.getRowWidth(y), "row width " + y);
         }
     }
 
     // new board
 
+    // check if all blocks empty
     @Test
     void newBoardIsEmpty() {
         TetrisBoard b = new TetrisBoard(10, 24);
+        // check if defaults are correct
         assertEquals(10, b.getWidth());
         assertEquals(24, b.getHeight());
         assertEquals(0, b.getMaxHeight());
@@ -76,6 +84,7 @@ class TetrisBoardTest {
 
     // movement
 
+    // simple left and right movement no obstacles
     @Test
     void leftAndRightInOpenSpace() {
         TetrisBoard b = withT(3, 4);
@@ -85,6 +94,7 @@ class TetrisBoardTest {
         assertEquals(new Point(3, 4), b.getCurrentPiecePosition());
     }
 
+    // left and right movement with wall
     @Test
     void leftAndRightBlocked() {
         TetrisBoard leftWall = withT(0, 4);
@@ -100,11 +110,13 @@ class TetrisBoardTest {
             "#.....",   // y = 2, beside the T's flat row
             "......",
             "......");
+        // blocked by existing block
         block.nextPiece(new TetrisPiece(PieceType.T), new Point(1, 1));
         assertEquals(Result.OUT_BOUNDS, block.move(Action.LEFT));
         assertEquals(new Point(1, 1), block.getCurrentPiecePosition());
     }
 
+    // test dropping
     @Test
     void downAndDropPlaceThePiece() {
         TetrisBoard down = withT(0, -1);   // flat row on y = 0
@@ -120,12 +132,14 @@ class TetrisBoardTest {
             "......",
             "......",
             "..#...");
+        // dropping on top
         drop.nextPiece(new TetrisPiece(PieceType.T), new Point(1, 2));
         assertEquals(Result.PLACE, drop.move(Action.DROP));
         assertEquals(PieceType.T, drop.getGrid(1, 1));   // lands on top of the block
         assertEquals(PieceType.T, drop.getGrid(2, 2));
     }
 
+    // if no current piece, should return no piece
     @Test
     void noCurrentPieceReturnsNoPiece() {
         TetrisBoard b = new TetrisBoard(8, 10);
@@ -134,6 +148,7 @@ class TetrisBoardTest {
         }
     }
 
+    // no action results in nothing happening
     @Test
     void nothingChangesNothing() {
         TetrisBoard b = withT(3, 4);
@@ -143,6 +158,7 @@ class TetrisBoardTest {
         assertEquals(new Point(3, 4), b.getCurrentPiecePosition());
     }
 
+    // checking last action fetchers
     @Test
     void lastActionAndResultTrackEveryMove() {
         TetrisBoard b = withT(0, 4);
@@ -161,6 +177,7 @@ class TetrisBoardTest {
         }
     }
 
+    // bounding box might go below the floor (should still place)
     @Test
     void tDropsToNegativeY() {
         TetrisBoard b = withT(3, 6);
@@ -173,6 +190,7 @@ class TetrisBoardTest {
 
     // rotation
 
+    // checking if srs wall kick logic is proper
     @Test
     void wallKickUsesFirstOffsetThatFits() {
         TetrisBoard b = new TetrisBoard(8, 10);
@@ -183,6 +201,7 @@ class TetrisBoardTest {
         assertEquals(new Point(0, 4), b.getCurrentPiecePosition());
     }
 
+    // counterclockwise kick
     @Test
     void counterclockwiseKickUsesItsOwnOffsets() {
         TetrisBoard b = board(
@@ -207,12 +226,13 @@ class TetrisBoardTest {
     void stickUsesItsOwnKickTable() {
         TetrisBoard b = new TetrisBoard(8, 10);
         b.nextPiece(verticalStick(), new Point(-2, 4));   // against the left wall
-        // R -> 2 needs the stick table's (+2,0) offset; every offset in the normal table fails here.
+        // R -> 2 needs the stick table's (+2,0) offset; every offset in the normal table fails
         assertEquals(Result.SUCCESS, b.move(Action.CLOCKWISE));
         assertEquals(2, b.getCurrentPiece().getRotationIndex());
         assertEquals(new Point(0, 4), b.getCurrentPiecePosition());
     }
 
+    // square kicks shouldn't move the square
     @Test
     void squareRotatesWithoutMoving() {
         // The board is exactly the square's size, so any kick would push it off the board.
@@ -226,6 +246,7 @@ class TetrisBoardTest {
         assertEquals(new Point(0, 0), b.getCurrentPiecePosition());
     }
 
+    // if the rotation shouldn't be possible
     @Test
     void blockedRotationChangesNothing() {
         TetrisBoard b = board(
@@ -234,6 +255,7 @@ class TetrisBoardTest {
             "###.");
         b.nextPiece(new TetrisPiece(PieceType.T), new Point(0, 0));
         for (Action a : new Action[] {Action.CLOCKWISE, Action.COUNTERCLOCKWISE}) {
+            // check if the rotation would result in block out of bounds
             assertEquals(Result.OUT_BOUNDS, b.move(a));
             assertEquals(0, b.getCurrentPiece().getRotationIndex());
             assertEquals(new Point(0, 0), b.getCurrentPiecePosition());
@@ -258,6 +280,7 @@ class TetrisBoardTest {
         assertNull(b.getGrid(0, 1));
     }
 
+    // 4 rows max edge case
     @Test
     void clearFourRows() {
         TetrisBoard b = board(
@@ -274,6 +297,7 @@ class TetrisBoardTest {
         checkStoredValues(b);
     }
 
+    // square clearing test + top row filling
     @Test
     void clearTopRow() {
         // A square filling a 2 x 2 board clears both rows, including the board's top row.
@@ -297,6 +321,7 @@ class TetrisBoardTest {
         assertEquals(0, b.getRowsCleared(), "a move that clears nothing reports 0");
     }
 
+    // check if non consecutive row clearing logic works
     @Test
     void nonAdjacentClears() {
         TetrisBoard b = board(
@@ -316,6 +341,7 @@ class TetrisBoardTest {
 
     // dropHeight
 
+    // checking drop height values vs known testing height
     @Test
     void dropHeight() {
         TetrisBoard empty = new TetrisBoard(8, 10);
@@ -334,9 +360,10 @@ class TetrisBoardTest {
 
     // equals
 
+    // various piece equals testing (orientation, type, position)
     @Test
     void boardEquality() {
-        // Same grid, piece and position are equal, even with a different move history.
+        // Same grid, piece and position are equal
         TetrisBoard a = withT(3, 4), b = withT(3, 4);
         b.move(Action.LEFT);
         b.move(Action.RIGHT);
@@ -354,6 +381,7 @@ class TetrisBoardTest {
 
     // invalid input
 
+    // check all invalid spawn positions
     @Test
     void invalidSpawnAndDropHeight() {
         TetrisBoard b = new TetrisBoard(4, 4);
@@ -373,6 +401,7 @@ class TetrisBoardTest {
         assertThrows(IllegalArgumentException.class, () -> b.dropHeight(new TetrisPiece(PieceType.T), 2));
     }
 
+    // invalid input testing
     @Test
     void invalidInput() {
         TetrisBoard b = board(
@@ -398,9 +427,7 @@ class TetrisBoardTest {
     }
 
     // white box
-    // These tests depend on how TetrisBoard stores its state: row widths, column heights
-    // and max height are kept in arrays and updated on each move (so their getters run in
-    // constant time), and testMove copies the 2D grid array.
+
 
     @Test
     void storedValuesMatchTheGrid() {
@@ -426,28 +453,32 @@ class TetrisBoardTest {
         }
     }
 
+
+    // check if test move actually just copies
     @Test
     void testMoveLeavesOriginalUnchanged() {
         TetrisBoard b = withT(3, 4);
         Board copy = b.testMove(Action.DROP);
         assertEquals(Result.PLACE, copy.getLastResult());
-        // Keep playing on the copy; a shallow copy of the grid would leak these blocks back.
+        // Keep playing on the copy
         copy.nextPiece(new TetrisPiece(PieceType.SQUARE), new Point(0, 4));
         copy.move(Action.DROP);
 
         assertEquals(new Point(3, 4), b.getCurrentPiecePosition());
         assertEquals(0, b.getMaxHeight());
+        // original should be unchanged
         assertNull(b.getGrid(4, 0));
         assertNull(b.getGrid(0, 0));
     }
 
     // statistical
 
+    // checks if cached counts stay correct after a lot of random moves
     @Test
     void randomActionsKeepStoredValuesCorrect() {
         // Runs the white-box stored-value check after every one of 10,000 random moves.
-        Random r = new Random(314);   // fixed seed, so any failure can be reproduced
-        TetrisBoard b = new TetrisBoard(5, 24);   // narrow, so random play still fills rows
+        Random r = new Random(314);   // fixed seed
+        TetrisBoard b = new TetrisBoard(5, 24);   // narrow board on purpose
         for (int step = 0; step < 10_000; step++) {
             if (b.getCurrentPiece() == null) {
                 try {
