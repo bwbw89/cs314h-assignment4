@@ -78,6 +78,7 @@ class TetrisPieceTest {
         }
     }
 
+    // dog body example
     @Test
     void specExamples() {
         assertArrayEquals(new int[] {0, 0}, new TetrisPiece(PieceType.SQUARE).getSkirt());

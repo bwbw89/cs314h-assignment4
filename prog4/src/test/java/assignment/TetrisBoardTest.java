@@ -477,7 +477,7 @@ class TetrisBoardTest {
     @Test
     void randomActionsKeepStoredValuesCorrect() {
         // Runs the white-box stored-value check after every one of 10,000 random moves.
-        Random r = new Random(314);   // fixed seed
+        Random r = new Random(100);   // fixed seed
         TetrisBoard b = new TetrisBoard(5, 24);   // narrow board on purpose
         for (int step = 0; step < 10_000; step++) {
             if (b.getCurrentPiece() == null) {
